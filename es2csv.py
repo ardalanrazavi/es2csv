@@ -181,12 +181,6 @@ class Es2csv:
             if is_dict(source):
                 for key in list(source.keys()):
                     to_keyvalue_pairs(source[key], ancestors + [key])
-
-            elif is_list(source):
-                if self.opts.kibana_nested:
-                    [to_keyvalue_pairs(item, ancestors) for item in source]
-                else:
-                    [to_keyvalue_pairs(item, ancestors + [str(index)]) for index, item in enumerate(source)]
             else:
                 header = header_delimeter.join(ancestors)
                 if header not in self.csv_headers:
