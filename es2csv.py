@@ -206,10 +206,11 @@ class Es2csv:
 
     def write_to_csv(self):
         if self.num_results > 0:
+            default_missing = self.opts.default_missing
             self.num_results = sum(1 for line in codecs.open(self.tmp_file, mode='r', encoding='utf-8'))
             if self.num_results > 0:
                 output_file = codecs.open(self.opts.output_file, mode='a', encoding='utf-8')
-                csv_writer = csv.DictWriter(output_file, fieldnames=self.csv_headers)
+                csv_writer = csv.DictWriter(output_file, restval=default_missing, fieldnames=self.csv_headers)
                 csv_writer.writeheader()
                 timer = 0
                 widgets = ['Write to csv ',
