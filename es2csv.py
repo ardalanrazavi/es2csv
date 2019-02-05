@@ -6,10 +6,11 @@ import elasticsearch
 import progressbar
 from backports import csv
 from functools import wraps
+import ipaddress
 
 
 FLUSH_BUFFER = 1000  # Chunk of docs to flush in temp file
-CONNECTION_TIMEOUT = 120
+CONNECTION_TIMEOUT = 15
 TIMES_TO_TRY = 3
 RETRY_DELAY = 60
 META_FIELDS = ['_id', '_index', '_score', '_type']
@@ -41,6 +42,15 @@ def retry(ExceptionToCheck, tries=TIMES_TO_TRY, delay=RETRY_DELAY):
 
     return deco_retry
 
+def ipv4_str_to_int(ip):
+    try:
+        if isinstance(ip, str):
+            ip = ipaddress.ip_address(ip)
+            if not isinstance(ip, ipaddress.IPv4Address):
+                raise Exception('Expecting ipv4 but received ipv6: ' + str(ip))
+        return int(ip)
+    except:
+        return None
 
 class Es2csv:
 
@@ -185,10 +195,18 @@ class Es2csv:
                 header = header_delimeter.join(ancestors)
                 if header not in self.csv_headers:
                     self.csv_headers.append(header)
+                # Converting IPv4 string to int
+                if self.opts.ip_format \
+                  and 'ip' in header \
+                  and 'geo' not in header:
+                    ip = ipv4_str_to_int(source)
+                    source = ip if ip else self.opts.default_missing
+
                 try:
                     out[header] = '{}{}{}'.format(out[header], self.opts.delimiter, source)
                 except:
                     out[header] = source
+
 
         with codecs.open(self.tmp_file, mode='a', encoding='utf-8') as tmp_file:
             for hit in hit_list:
