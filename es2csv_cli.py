@@ -17,8 +17,8 @@ import es2csv
 
 __version__ = '5.5.2'
 
+def get_args(args=None):
 
-def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('-q', '--query', dest='query', type=str, required=True, help='Query string in Lucene syntax.')
     p.add_argument('--default-missing', dest='default_missing', default='\\N', type=str, help='Default value for the missing field')
@@ -44,11 +44,16 @@ def main():
     p.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Show version and exit.')
     p.add_argument('--debug', dest='debug_mode', action='store_true', help='Debug mode on.')
 
-    if len(sys.argv) == 1:
+    if not args and len(sys.argv) == 1:
         p.print_help()
         exit()
 
-    opts = p.parse_args()
+    opts = p.parse_args(args)
+
+    return opts
+
+def main():
+    opts = get_args()
     es = es2csv.Es2csv(opts)
     es.create_connection()
     es.check_indexes()
