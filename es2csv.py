@@ -78,7 +78,7 @@ class Es2csv:
         if '_all' in indexes:
             indexes = ['_all']
         else:
-            indexes = [index for index in indexes if self.es_conn.indices.exists(index)]
+            indexes = [index for index in indexes if self.es_conn.indices.get_alias(index)]
             if not indexes:
                 print(('Any of index(es) {} does not exist in {}.'.format(', '.join(self.opts.index_prefixes), self.opts.url)))
                 exit(1)
@@ -123,8 +123,7 @@ class Es2csv:
 
         if '_all' not in self.opts.fields:
             search_args['_source_include'] = ','.join(self.opts.fields)
-            self.csv_headers.extend([field for field in self.opts.fields if '*' not in field])
-
+            self.csv_headers.extend([field for field in self.opts.fields[0].split(',') if '*' not in field])
         if self.opts.debug_mode:
             print(('Using these indices: {}.'.format(', '.join(self.opts.index_prefixes))))
             print(('Query[{0[0]}]: {0[1]}.'.format(
@@ -202,10 +201,25 @@ class Es2csv:
                     ip = ipv4_str_to_int(source)
                     source = ip if ip else self.opts.default_missing
 
+                if self.opts.split_fields:
+                    # just works for comma seprated
+                    for f in self.opts.split_fields:
+                        if header in f:
+                            parent_child_headers = f.split(':') if f != '' else None
+                            if parent_child_headers:
+                                child_headers = parent_child_headers[1].split(",")
+                                splitted_source = source.split(',') if source and ',' in source else None
+                                out[child_headers[0]] = splitted_source[0] if splitted_source else self.opts.default_missing
+                                out[child_headers[1]] = splitted_source[1] if splitted_source else self.opts.default_missing
+
+                # Convert ms to s
+                if self.opts.timestamp_ms and header in self.opts.timestamp_ms:
+                    source = source // 1000
                 try:
                     out[header] = '{}{}{}'.format(out[header], self.opts.delimiter, source)
                 except:
-                    out[header] = source
+                    out[header] = source if source != '' else self.opts.default_missing
+
 
 
         with codecs.open(self.tmp_file, mode='a', encoding='utf-8') as tmp_file:

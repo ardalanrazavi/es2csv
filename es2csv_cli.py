@@ -23,6 +23,8 @@ def get_args(args=None):
     p.add_argument('-q', '--query', dest='query', type=str, required=True, help='Query string in Lucene syntax.')
     p.add_argument('--default-missing', dest='default_missing', default='\\N', type=str, help='Default value for the missing field')
     p.add_argument('--ip-format', dest='ip_format', default=None, type=bool, help='Default format for ip format')
+    p.add_argument('--timestamp-ms', dest='timestamp_ms', default=None, type=str, nargs='+', help='Convert fields with ms ts to s ')
+    p.add_argument('--split-fields', dest='split_fields', default=None, type=str, nargs='+', help='split field to desired ones etc: content_type:content,type will be splitted with ,')
     p.add_argument('-u', '--url', dest='url', default='http://localhost:9200', type=str, help='Elasticsearch host URL. Default is %(default)s.')
     p.add_argument('-a', '--auth', dest='auth', type=str, required=False, help='Elasticsearch basic authentication in the form of username:password.')
     p.add_argument('-i', '--index-prefixes', dest='index_prefixes', default=['logstash-*'], type=str, nargs='+', metavar='INDEX', help='Index name prefix(es). Default is %(default)s.')
@@ -44,11 +46,10 @@ def get_args(args=None):
     p.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__, help='Show version and exit.')
     p.add_argument('--debug', dest='debug_mode', action='store_true', help='Debug mode on.')
 
+    opts = p.parse_args(args)
     if not args and len(sys.argv) == 1:
         p.print_help()
         exit()
-
-    opts = p.parse_args(args)
 
     return opts
 
